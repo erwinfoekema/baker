@@ -30,7 +30,6 @@ class RecipeManager extends PersistentActor with ActorLogging {
   private def addRecipe(recipeId: String, compiledRecipe: CompiledRecipe) =
     compiledRecipes += (recipeId -> compiledRecipe)
 
-
   override def receiveCommand: Receive = {
     case AddRecipe(compiledRecipe) => {
       val foundRecipe = hasCompiledRecipe(compiledRecipe)

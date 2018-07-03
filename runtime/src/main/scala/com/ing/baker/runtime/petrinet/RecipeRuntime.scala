@@ -27,40 +27,9 @@ class RecipeRuntime(recipeName: String, interactionManager: InteractionManager, 
 
   override val eventSource = RecipeRuntime.eventSourceFn
 
-  override val exceptionHandler: ExceptionHandler[Place, Transition, ProcessState] = new ExceptionHandler[Place, Transition, ProcessState] {
-    override def handleException(job: Job[Place, Transition, ProcessState])
-                                (throwable: Throwable, failureCount: Int, startTime: Long, outMarking: MultiSet[Place[_]]) =
+  override val exceptionHandler: ExceptionHandler[Place, Transition, ProcessState] = new RecipeExceptionHandler(recipeName, eventStream)
 
-      if (throwable.isInstanceOf[Error])
-        BlockTransition
-      else
-        job.transition match {
-          case interaction: InteractionTransition[_] =>
-
-            // compute the interaction failure strategy outcome
-            val failureStrategyOutcome = interaction.failureStrategy.apply(failureCount)
-
-            val currentTime = System.currentTimeMillis()
-
-            eventStream.publish(
-              InteractionFailed(currentTime, currentTime - startTime, recipeName,
-                job.processState.processId, job.transition.label, failureCount, throwable, failureStrategyOutcome))
-
-            // translates the recipe failure strategy to a petri net failure strategy
-            failureStrategyOutcome match {
-              case ExceptionStrategyOutcome.BlockTransition => BlockTransition
-              case ExceptionStrategyOutcome.RetryWithDelay(delay) => RetryWithDelay(delay)
-              case ExceptionStrategyOutcome.Continue(eventName) => {
-                val runtimeEvent = new RuntimeEvent(eventName, Seq.empty)
-                Continue(createProducedMarking(interaction, outMarking)(runtimeEvent), runtimeEvent)
-              }
-            }
-
-          case _ => BlockTransition
-        }
-  }
-
-  override val taskProvider = new TaskProvider(recipeName, interactionManager, eventStream)
+  override val taskProvider = new RecipeTaskProvider(recipeName, interactionManager, eventStream)
 
   override lazy val jobPicker = new JobPicker[Place, Transition](tokenGame) {
     override def isAutoFireable[S](instance: Instance[Place, Transition, S], t: Transition[_]): Boolean = t match {

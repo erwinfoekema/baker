@@ -10,13 +10,13 @@ import com.ing.baker.petrinet.api._
 import com.ing.baker.petrinet.runtime._
 import com.ing.baker.runtime.core.events.{InteractionCompleted, InteractionStarted}
 import com.ing.baker.runtime.core.interations.InteractionManager
-import com.ing.baker.runtime.core.{ProcessState, RuntimeEvent}
+import com.ing.baker.runtime.core.{FatalInteractionException, ProcessState, RuntimeEvent}
 import com.ing.baker.types.{PrimitiveValue, Value}
 import org.slf4j.{LoggerFactory, MDC}
 
-class TaskProvider(recipeName: String, interactionManager: InteractionManager, eventStream: EventStream) extends TransitionTaskProvider[Place, Transition, ProcessState, RuntimeEvent] {
+class RecipeTaskProvider(recipeName: String, interactionManager: InteractionManager, eventStream: EventStream) extends TransitionTaskProvider[Place, Transition, ProcessState, RuntimeEvent] {
 
-  val log = LoggerFactory.getLogger(classOf[TaskProvider])
+  val log = LoggerFactory.getLogger(classOf[RecipeTaskProvider])
 
   override def apply[Input](petriNet: PetriNet[Place[_], Transition[_]], t: Transition[Input]): TransitionTask[Place, Input, ProcessState, RuntimeEvent] = {
     t match {
